@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>  
+  <!-- Servlets -->
+  <servlet>
+    <servlet-name>UserDataServlet</servlet-name>
+    <servlet-class>com.roman.runningmate.server.UserDataServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>UserDataServlet</servlet-name>
+    <url-pattern>/runningmatewebapp/user_data_service</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>DataServlet</servlet-name>
+    <servlet-class>com.roman.runningmate.server.DataService</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>DataServlet</servlet-name>
+    <url-pattern>/data_service</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>AdminServlet</servlet-name>
+    <servlet-class>com.roman.runningmate.server.AdminService</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>AdminServlet</servlet-name>
+    <url-pattern>/admin</url-pattern>
+  </servlet-mapping>
+  
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>RunningMateWebApp.html</welcome-file>
+  </welcome-file-list>
+</web-app>

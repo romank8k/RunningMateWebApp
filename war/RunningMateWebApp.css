@@ -1,0 +1,79 @@
+.gwt-Button {
+  margin: 0;
+  padding: 3px 5px;
+  text-decoration: none;
+  font-size: small;
+  font-family: "Lucida Console", monospace;
+  cursor: pointer;
+  cursor: hand;
+  background: url("images/hborder.png") repeat-x 0px -27px;
+  border: 1px outset #ccc;
+}
+.gwt-Button:active {
+  border: 1px inset #ccc;
+}
+.gwt-Button:hover {
+  border-color: #9cf #69e #69e #7af;
+}
+.gwt-Button[disabled] {
+  cursor: default;
+  color: #888;
+}
+.gwt-Button[disabled]:hover {
+  border: 1px outset #ccc;
+}
+
+.gwt-TabLayoutPanel {
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabs {
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelContent {
+  border-color: #92c1f0;
+  border-style: solid;
+  border-width: 3px 2px 2px;
+  overflow: hidden;
+  padding: 6px;
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab {
+  margin-left: 6px;
+  padding: 3px 6px 3px 6px;
+  cursor: pointer;
+  cursor: hand;
+  color: black;
+  font-weight: bold;
+  text-align: center;
+  background: #d0e4f6;
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab-selected {
+  cursor: default;
+  background: #92c1f0;
+}
+
+.MapWidgetWrapper {
+  border-color: #92c1f0;
+  border-style: solid;
+  border-width: 3px 2px 2px;
+}
+
+.RunsTable {
+  font-size: 13px;
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+.RunsTable th {	
+  font-size: 18px;
+  font-weight: bold;
+  padding: 8px;	
+  border-top: 4px solid #aabcfe;
+  border-bottom: 1px solid #fff;
+}
+.RunsTable td {
+  padding: 8px;
+  background: #d0e4f6; 
+  border-bottom: 1px solid #fff;
+  border-top: 1px solid transparent;
+}
+.RunsTable tr:hover td {
+  background: #92c1f0;
+}
