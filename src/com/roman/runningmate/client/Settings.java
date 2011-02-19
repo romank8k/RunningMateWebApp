@@ -28,22 +28,27 @@ package com.roman.runningmate.client;
 import com.google.gwt.http.client.URL;
 
 public class Settings {
-  public static final boolean DEBUG = false;
+  private static final boolean DEBUG = false;
 
-  public static final boolean SMALLER_LAYOUT = true;
-  public static final boolean EMBEDDED = false;
+  private static final boolean SMALLER_LAYOUT = false;
 
-  public static final String GOOGLE_MAPS_API_KEY = "";
+  // When using the embedded mode, you'll need to use a simple proxy to get the data from Google App Engine.
+  // Since you'll be deploying the GWT portion on your own site, the proxy will allow you to get past the
+  // same domain origin policy for AJAX requests.
+  private static final boolean EMBEDDED = true;
 
-  public static final String BASE_URL = DEBUG ? "http://127.0.0.1:8888" : "http://running-mate.appspot.com";
+  private static final String GOOGLE_MAPS_API_KEY = EMBEDDED ? "" :
+                                                               "";
 
-  public static String LOGIN_REDIRECT_URL = DEBUG ? (BASE_URL + "/RunningMateWebApp.html?gwt.codesvr=127.0.0.1:9997") : (BASE_URL + "/");
+  private static final String BASE_URL = DEBUG ? "http://127.0.0.1:8888" : (EMBEDDED ? "http://mindcache.net/running/proxy" : "http://running-mate.appspot.com");
 
-  public static String GET_RUNS_PATH = "/data_service?request_type=get_runs";
-  public static String GET_COORDINATES_PATH = "/data_service?request_type=get_coordinates";
+  private static String LOGIN_REDIRECT_URL = DEBUG ? (BASE_URL + "/RunningMateWebApp.html?gwt.codesvr=127.0.0.1:9997") : (BASE_URL + "/");
 
-  public static String RUNS_URL = DEBUG ? (BASE_URL + GET_RUNS_PATH) : (BASE_URL + GET_RUNS_PATH);
-  public static String RUN_COORDINATES_URL = DEBUG ? (BASE_URL + GET_COORDINATES_PATH) : (BASE_URL + GET_COORDINATES_PATH);
+  private static String GET_RUNS_PATH = EMBEDDED ? "/runs.php" : "/data_service?request_type=get_runs";
+  private static String GET_COORDINATES_PATH = EMBEDDED ? "/coordinates.php?dummy_entry=0" : "/data_service?request_type=get_coordinates";
+
+  private static String RUNS_URL = BASE_URL + GET_RUNS_PATH;
+  private static String RUN_COORDINATES_URL = BASE_URL + GET_COORDINATES_PATH;
 
   public static boolean getSmallerLayout() {
     return SMALLER_LAYOUT;

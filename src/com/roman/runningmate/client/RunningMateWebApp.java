@@ -75,13 +75,17 @@ public class RunningMateWebApp implements EntryPoint {
 
   @Override
   public void onModuleLoad() {
-    String accessId = Window.Location.getParameter("access_id");
-    if (accessId != null) {
-      Settings.setRunsUrlAccessId(accessId);
-      Settings.setRunCoordinatesUrlAccessId(accessId);
+    if (Settings.getEmbedded()) {
       loadUi(false);
     } else {
-      getLoginStatus();
+      String accessId = Window.Location.getParameter("access_id");
+      if (accessId != null) {
+        Settings.setRunsUrlAccessId(accessId);
+        Settings.setRunCoordinatesUrlAccessId(accessId);
+        loadUi(false);
+      } else {
+        getLoginStatus();
+      }
     }
   }
 
