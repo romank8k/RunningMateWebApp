@@ -52,6 +52,7 @@ import com.google.gwt.maps.client.overlay.Polyline;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -70,6 +71,9 @@ public class RunningMateWebApp implements EntryPoint {
   private ScrollPanel settings = new ScrollPanel();
 
   private MapWidget map = null;
+
+  // Mapping of row number to run ID, where the row number is the array index.
+  private ArrayList<Integer> runIds = new ArrayList<Integer>();
 
   private HashMap<Integer, LinkedList<Polyline>> runsMapping = new HashMap<Integer, LinkedList<Polyline>>();
 
@@ -106,7 +110,7 @@ public class RunningMateWebApp implements EntryPoint {
     });
   }
 
-  public void loadUi(final boolean showSettingsPanel) {
+  public void loadUi(final boolean isLoggedIn) {
     Maps.loadMapsApi(Settings.getGoogleMapsApiKey(), "2", false, new Runnable() {
       @Override
       public void run() {
@@ -121,13 +125,13 @@ public class RunningMateWebApp implements EntryPoint {
         map.addControl(new LargeMapControl3D());
         map.setScrollWheelZoomEnabled(true);
 
-        LayoutPanel dailyStatsContainer = new LayoutPanel();
+        final LayoutPanel dailyStatsContainer = new LayoutPanel();
         dailyStatsContainer.add(dailyRuns);
-        LayoutPanel monthlyStatsContainer = new LayoutPanel();
+        final LayoutPanel monthlyStatsContainer = new LayoutPanel();
         monthlyStatsContainer.add(monthlyRuns);
-        LayoutPanel yearlyStatsContainer = new LayoutPanel();
+        final LayoutPanel yearlyStatsContainer = new LayoutPanel();
         yearlyStatsContainer.add(yearlyRuns);
-        LayoutPanel settingsContainer = new LayoutPanel();
+        final LayoutPanel settingsContainer = new LayoutPanel();
         settingsContainer.add(settings);
 
         if (Settings.getSmallerLayout()) {
@@ -149,11 +153,11 @@ public class RunningMateWebApp implements EntryPoint {
         statsPanel.add(dailyStatsContainer, "Daily Stats");
         statsPanel.add(monthlyStatsContainer, "Monthly Stats");
         statsPanel.add(yearlyStatsContainer, "Yearly Stats");
-        if (showSettingsPanel) {
+        if (isLoggedIn) {
           statsPanel.add(settingsContainer, "Settings");
         }
 
-        if (showSettingsPanel) {
+        if (isLoggedIn) {
           populateSettings();
         }
 
@@ -185,7 +189,51 @@ public class RunningMateWebApp implements EntryPoint {
           rp.add(container);
         }
 
-        getRuns();
+        getRuns(isLoggedIn);
+
+        if (isLoggedIn) {
+          dailyStatsContainer.setWidgetTopBottom(dailyRuns, 0, Unit.PCT, 4, Unit.EM);
+
+          final Button removeRunsButton = new Button("Remove Selected Runs", new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+              Grid grid = (Grid) dailyRuns.getWidget();
+              int numDataRows = grid.getRowCount() - 1;
+              StringBuilder removeRunIdsJsonStr = new StringBuilder();
+              removeRunIdsJsonStr.append('[');
+              for (int i = 0; i < numDataRows; ++i) {
+                CheckBox checkBox = (CheckBox) grid.getWidget(i + 1, 6);
+                boolean checked = checkBox.getValue();
+                if (checked) {
+                  removeRunIdsJsonStr.append((removeRunIdsJsonStr.length() > 1 ? "," : "") + "\"" + runIds.get(i) + "\"");
+                }
+              }
+              removeRunIdsJsonStr.append(']');
+
+              if (removeRunIdsJsonStr.length() > 2) {
+                RemoteRequest.requestGetURI(new CommandResponse() {
+                  @Override
+                  public void executeOnSuccess(String responseTextSuccess) {
+                    clearPaths();
+                    getRuns(isLoggedIn);
+                  }
+
+                  @Override
+                  public void executeOnFailure(String responseTextFailure) {
+                    Window.alert("Failed to remove runs.");
+                  }
+                }, Settings.getRemoveRunsUrl(removeRunIdsJsonStr.toString()));
+              } else {
+                Window.alert("Select some runs first!");
+              }
+            }
+          });
+          dailyStatsContainer.add(removeRunsButton);
+
+          dailyStatsContainer.setWidgetLeftWidth(removeRunsButton, 40, Unit.PCT, 20, Unit.PCT);
+          dailyStatsContainer.setWidgetRightWidth(removeRunsButton, 40, Unit.PCT, 20, Unit.PCT);
+          dailyStatsContainer.setWidgetBottomHeight(removeRunsButton, 0.5, Unit.EM, 3, Unit.EM);
+        }
       }
     });
   }
@@ -273,6 +321,15 @@ public class RunningMateWebApp implements EntryPoint {
     }
   }
 
+  private void clearPaths() {
+    for (LinkedList<Polyline> polyList : runsMapping.values()) {
+      for (Polyline polyline : polyList) {
+        map.removeOverlay(polyline);
+      }
+    }
+    runsMapping.clear();
+  }
+
   public void getMapCoordinates(final int runId) {
     RemoteRequest.requestGetURI(new CommandResponse() {
       @Override
@@ -287,11 +344,11 @@ public class RunningMateWebApp implements EntryPoint {
     }, Settings.getRunCoordinatesUrl(runId));
   }
 
-  public void getRuns() {
+  public void getRuns(final boolean isLoggedIn) {
     RemoteRequest.requestGetURI(new CommandResponse() {
       @Override
       public void executeOnSuccess(String responseTextSuccess) {
-        buildRunsTable(responseTextSuccess);
+        buildRunsTable(responseTextSuccess, isLoggedIn);
         buildMonthlyRunsTable(responseTextSuccess);
         buildYearlyRunsTable(responseTextSuccess);
       }
@@ -314,15 +371,14 @@ public class RunningMateWebApp implements EntryPoint {
     return timeElapsed;
   }
 
-  public void buildRunsTable(String jsonResult) {
+  public void buildRunsTable(String jsonResult, final boolean isLoggedIn) {
     JSONValue jsonValue = JSONParser.parseStrict(jsonResult);
     JSONArray runsArray = jsonValue.isObject().get("runs").isArray();
 
-    final Grid grid = new Grid(runsArray.size() + 1, 6);
+    final Grid grid = new Grid(runsArray.size() + 1, 6 + (isLoggedIn ? 1 : 0));
     grid.setStylePrimaryName("RunsTable");
 
-    // Mapping of row number to run ID, where the row number if the array index.
-    final ArrayList<Integer> runIds = new ArrayList<Integer>();
+    runIds.clear();  // This function might have been called previously, so we need to clear the runIds.
 
     grid.setHTML(0, 0, "<b>Toggle Path</b>");
     grid.setHTML(0, 1, "<b>Day</b>");
@@ -330,6 +386,9 @@ public class RunningMateWebApp implements EntryPoint {
     grid.setHTML(0, 3, "<b>Stop Time</b>");
     grid.setHTML(0, 4, "<b>Total Run Time</b>");
     grid.setHTML(0, 5, "<b>Distance</b>");
+    if (isLoggedIn) {
+      grid.setHTML(0, 6, "<b>Select</b>");
+    }
 
     DateTimeFormat dayFormat = DateTimeFormat.getFormat("EEE, MMM dd, yyyy");
     DateTimeFormat timeFormat = DateTimeFormat.getFormat("hh:mm:ss aa");
@@ -373,6 +432,10 @@ public class RunningMateWebApp implements EntryPoint {
       grid.setText(row, 4, formatTimeElapsed(timeEnd - timeStart));
 
       grid.setText(row, 5, Double.toString(((int) (metersToMiles(distance) * 100)) / 100.0) + " miles");
+
+      if (isLoggedIn) {
+        grid.setWidget(row, 6, new CheckBox());
+      }
     }
 
     dailyRuns.setWidget(grid);

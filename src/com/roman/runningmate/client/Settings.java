@@ -35,7 +35,7 @@ public class Settings {
   // When using the embedded mode, you'll need to use a simple proxy to get the data from Google App Engine.
   // Since you'll be deploying the GWT portion on your own site, the proxy will allow you to get past the
   // same domain origin policy for AJAX requests.
-  private static final boolean EMBEDDED = true;
+  private static final boolean EMBEDDED = false;
 
   private static final String GOOGLE_MAPS_API_KEY = EMBEDDED ? "" :
                                                                "";
@@ -45,10 +45,12 @@ public class Settings {
   private static String LOGIN_REDIRECT_URL = DEBUG ? (BASE_URL + "/RunningMateWebApp.html?gwt.codesvr=127.0.0.1:9997") : (BASE_URL + "/");
 
   private static String GET_RUNS_PATH = EMBEDDED ? "/runs.php" : "/data_service?request_type=get_runs";
+  private static String REMOVE_RUNS_PATH = "/data_service?request_type=remove_runs";
   private static String GET_COORDINATES_PATH = EMBEDDED ? "/coordinates.php?dummy_entry=0" : "/data_service?request_type=get_coordinates";
 
   private static String RUNS_URL = BASE_URL + GET_RUNS_PATH;
   private static String RUN_COORDINATES_URL = BASE_URL + GET_COORDINATES_PATH;
+  private static String REMOVE_RUNS_URL = BASE_URL + REMOVE_RUNS_PATH;
 
   public static boolean getSmallerLayout() {
     return SMALLER_LAYOUT;
@@ -88,5 +90,9 @@ public class Settings {
 
   public static void setRunCoordinatesUrlAccessId(String accessId) {
     RUN_COORDINATES_URL += "&access_id=" + accessId;
+  }
+
+  public static String getRemoveRunsUrl(String runIdsJson) {
+    return REMOVE_RUNS_URL + "&run_ids=" + runIdsJson;
   }
 }

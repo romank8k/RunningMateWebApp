@@ -104,6 +104,25 @@ public class DataService extends HttpServlet {
             String result = getCoordinates(user, runId);
             out.println(result);
           }
+        } else if (requestType.equals("remove_runs")) {
+          String runIdsJson = request.getParameter("run_ids");
+          if (runIdsJson != null) {
+            removeRuns(user, runIdsJson);
+          }
+        } else if(requestType.equals("merge_runs")) {
+          String runIdsJson = request.getParameter("run_ids");
+          if (runIdsJson != null) {
+            mergeRuns(user, runIdsJson);
+          }
+        } else if (requestType.equals("clear_runs")) {
+          UserService userService = UserServiceFactory.getUserService();
+          String thisURL = request.getRequestURI();
+          out.println("<html><body>");
+          out.println("<p>Hello, " + request.getUserPrincipal().getName() + "!</p>");
+          out.println("<p>Deleting your runs (as many as possible before we time out)...</p>");
+          out.println("<p><a href=\"" + userService.createLogoutURL(thisURL) + "\">Sign Out</a></p>");
+          out.println("</body></html>");
+          clearRuns(user);
         } else {
           // Unrecognized request type.
         }
@@ -133,6 +152,52 @@ public class DataService extends HttpServlet {
     }
 
     return user;
+  }
+
+  // TODO: Need a merge operation, so we can merge several runs into one.
+  public void mergeRuns(User user, String json) {
+  }
+
+  public void removeRuns(User user, String json) {
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+    Key userKey = KeyFactory.createKey("User", user.getUserId());
+
+    try {
+      JSONParser parser = new JSONParser();
+      JSONArray runIdsArray = (JSONArray) parser.parse(json);
+      for (Object runIdObj : runIdsArray) {
+        String runId = (String) runIdObj;
+        Key runKey = KeyFactory.createKey(userKey, "Run", Long.parseLong(runId));
+
+        Query pointsQuery = new Query("Point", runKey);
+        pointsQuery.setKeysOnly();
+        PreparedQuery preparedPointsQuery = datastore.prepare(pointsQuery);
+        for (Entity point : preparedPointsQuery.asIterable()) {
+          datastore.delete(point.getKey());
+        }
+        datastore.delete(runKey);
+      }
+    } catch (ParseException e) {
+    }
+  }
+
+  public void clearRuns(User user) {
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+    Key userKey = KeyFactory.createKey("User", user.getUserId());
+    Query runsQuery = new Query("Run", userKey);
+    runsQuery.setKeysOnly();
+    PreparedQuery preparedRunsQuery = datastore.prepare(runsQuery);
+    for (Entity run : preparedRunsQuery.asIterable()) {
+      Query pointsQuery = new Query("Point", run.getKey());
+      pointsQuery.setKeysOnly();
+      PreparedQuery preparedPointsQuery = datastore.prepare(pointsQuery);
+      for (Entity point : preparedPointsQuery.asIterable()) {
+        datastore.delete(point.getKey());
+      }
+      datastore.delete(run.getKey());
+    }
   }
 
   @SuppressWarnings("unchecked")
