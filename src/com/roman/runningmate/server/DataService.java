@@ -285,7 +285,9 @@ public class DataService extends HttpServlet {
       Long timeStart = (Long) run.getProperty("time_start");
       return timeStart;
     }
-    return Long.MAX_VALUE;
+
+    // Means that we don't have any runs yet, so upload all of them.
+    return 0;
   }
 
   void addUserRuns(User user, String json) {
