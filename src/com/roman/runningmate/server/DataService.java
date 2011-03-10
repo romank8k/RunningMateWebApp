@@ -98,6 +98,8 @@ public class DataService extends HttpServlet {
         if (requestType.equals("get_runs")) {
           String result = getRuns(user);
           out.println(result);
+        } else if(requestType.equals("get_last_synced_run_time")) {
+          out.println(getLastSyncedRunTime(user));
         } else if (requestType.equals("get_coordinates")) {
           String runId = request.getParameter("run_id");
           if (runId != null) {
@@ -269,6 +271,21 @@ public class DataService extends HttpServlet {
     JSONObject runsObject = new JSONObject();
     runsObject.put("runs", runsArray);
     return runsObject.toJSONString();
+  }
+
+  public long getLastSyncedRunTime(User user) {
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+    Key userKey = KeyFactory.createKey("User", user.getUserId());
+    Query runsQuery = new Query("Run", userKey);
+    runsQuery.addSort("time_start", SortDirection.DESCENDING);
+    PreparedQuery preparedQuery = datastore.prepare(runsQuery);
+
+    for (Entity run : preparedQuery.asIterable()) {
+      Long timeStart = (Long) run.getProperty("time_start");
+      return timeStart;
+    }
+    return Long.MAX_VALUE;
   }
 
   void addUserRuns(User user, String json) {
